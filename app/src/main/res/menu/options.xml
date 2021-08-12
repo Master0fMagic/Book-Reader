@@ -24,8 +24,8 @@
     <!-- android:icon="@drawable/select_list" -->
     <item
         android:id="@+id/menu_mark"
-        android:title="@string/mark"
         android:icon="@drawable/select_list"
+        android:title="@string/mark"
         app:showAsAction="ifRoom">
         <menu>
             <group

@@ -2,6 +2,7 @@ package com.quaap.bookymcbookface;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -10,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
 import android.graphics.drawable.Icon;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -141,10 +143,64 @@ public class BookListActivity extends AppCompatActivity {
 
         listHolder.setAdapter(bookAdapter);
 
+        receiverSendAction();
+
         processIntent(getIntent());
+
+
 
         //Log.d("BOOKLIST", "onCreate end");
 
+    }
+
+
+    private void receiverSendAction() {
+
+
+        Intent intent = this.getIntent();
+        String action = intent.getAction();
+        String type = intent.getType();
+
+        if (Intent.ACTION_VIEW.equals(action) && type != null) {
+            if ("text/plain".equals(type)) {
+                int a = 2;
+                //handleSendText(intent); // Handle text being sent
+            } else if (type.startsWith("application/epub+zip")) {
+                int a = 1;
+                handleSendImage(intent); // Handle single image being sent
+            }
+        } else if (Intent.ACTION_SEND_MULTIPLE.equals(action) && type != null) {
+            if (type.startsWith("image/")) {
+                //handleSendMultipleImages(intent); // Handle multiple images being sent
+            }
+        } else {
+            // Handle other intents, such as being started from the home screen
+        }
+
+    }
+
+    @SuppressWarnings("deprecation")
+    private void handleSendImage(Intent intent) {
+        final Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        /*
+        pd = new ProgressDialog(myActivity);
+        pd.setMessage("loading");
+        pd.show();
+        */
+        if (imageUri != null) {
+
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+
+
+                    //intendSendImage(imageUri, 0);
+                }
+            };
+            new Thread(runnable).start();
+
+
+        }
     }
 
     @Override
@@ -153,6 +209,25 @@ public class BookListActivity extends AppCompatActivity {
         super.onNewIntent(intent);
         processIntent(intent);
     }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode,
+                                 Intent returnIntent) {
+        // If the selection didn't work
+        if (resultCode != RESULT_OK) {
+            // Exit without doing anything else
+            return;
+        } else {
+            // Get the file's content URI from the incoming Intent
+            Uri returnUri = returnIntent.getData();
+            /*
+             * Try to open the file for "read" access using the
+             * returned URI. If the file isn't found, write to the
+             * error log and return.
+             */
+        }
+    }
+
 
     private void processIntent(Intent intent) {
 
@@ -204,6 +279,7 @@ public class BookListActivity extends AppCompatActivity {
     protected void onResume() {
         //Log.d("BOOKLIST", "onResume");
         super.onResume();
+        receiverSendAction();
         if (openLastread) {
             openLastread = false;
             viewAdder.postDelayed(new Runnable() {
