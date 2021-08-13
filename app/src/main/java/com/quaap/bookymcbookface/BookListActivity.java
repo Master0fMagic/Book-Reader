@@ -183,22 +183,19 @@ public class BookListActivity extends AppCompatActivity {
     @SuppressWarnings("deprecation")
     private void handleSendImage(Intent intent) {
         final Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
-        /*
-        pd = new ProgressDialog(myActivity);
-        pd.setMessage("loading");
-        pd.show();
-        */
+
         if (imageUri != null) {
 
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-
-
-                    //intendSendImage(imageUri, 0);
-                }
-            };
-            new Thread(runnable).start();
+            checkStorageAccess(false);
+            String filename = imageUri.getPath().replace("/device_storage", "/storage/emulated" );
+            int id =  db.getBookId(filename);
+            if (id == -1) {
+                addBook(filename);
+            }
+            id =  db.getBookId(filename);
+            if (id > -1) {
+                readBook(id);
+            }
 
 
         }
@@ -280,7 +277,7 @@ public class BookListActivity extends AppCompatActivity {
     protected void onResume() {
         //Log.d("BOOKLIST", "onResume");
         super.onResume();
-        receiverSendAction();
+        //receiverSendAction();
         if (openLastread) {
             openLastread = false;
             viewAdder.postDelayed(new Runnable() {

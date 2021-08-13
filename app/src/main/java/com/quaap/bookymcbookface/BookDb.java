@@ -140,6 +140,22 @@ public class BookDb extends SQLiteOpenHelper {
 
     }
 
+
+    public int getBookId(String filename) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        try (Cursor bookcursor = db.query(BOOK_TABLE,new String[] {BOOK_ID},BOOK_FILENAME + "=?", new String[] {filename}, null, null, null)) {
+            int id = -1;
+            bookcursor.moveToFirst();
+            if  (!bookcursor.isAfterLast()) {
+             id = bookcursor.getInt(bookcursor.getColumnIndex(BOOK_ID));
+            }
+            return id;
+        }
+
+    }
+
+
     public boolean removeBook(String filename) {
         SQLiteDatabase db = this.getWritableDatabase();
 
