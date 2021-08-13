@@ -32,49 +32,17 @@
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <!--
-
                 <data android:scheme="file" />
- <data android:scheme="file" />
                 <data android:scheme="http" />
                 <data android:scheme="https" />
-                <data android:scheme="*" />
                 <data android:host="*" />
                 -->
                 <data android:scheme="content" />
-
-
-                <!--
-                    <data android:mimeType="*/*" />
-
-                    Work around Android's ugly primitive PatternMatcher
-                    implementation that can't cope with finding a . early in
-                    the path unless it's explicitly matched.
-
-                -->
                 <data android:mimeType="application/epub+zip" />
-
-
-                <!--
-                <data android:pathPattern=".*\\.epub" />
-                <data android:pathPattern=".*\\..*\\.epub" />
-                <data android:pathPattern=".*\\..*\\..*\\.epub" />
-                <data android:pathPattern=".*\\..*\\..*\\..*\\.epub" />
-                -->
-                <!-- keep going if you need more -->
-
             </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.SEND"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="application/epub+zip" />
-
-            </intent-filter>
-
-
 
         </activity>
         <activity
@@ -86,21 +54,23 @@
             android:screenOrientation="portrait"
             android:parentActivityName=".BookListActivity" />
 
-<!--
+
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="com.quaap.bookymcbookface.fileprovider"
         android:grantUriPermissions="true"
-
+            android:exported="false"
         android:permission="android.permission.MANAGE_DOCUMENTS">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/filepaths"/>
+            <!--
         <intent-filter>
             <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
         </intent-filter>
+        -->
         </provider>
--->
+
 
 
 </application>
