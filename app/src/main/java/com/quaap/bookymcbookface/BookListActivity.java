@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
+import android.database.Cursor;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -22,6 +23,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.SpannableString;
 import android.text.TextWatcher;
@@ -159,6 +162,7 @@ public class BookListActivity extends AppCompatActivity {
         Intent intent = this.getIntent();
         String action = intent.getAction();
         String type = intent.getType();
+        final Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
 
         Log.i("action.V", action);
         Log.i("action.V", intent.toString());
@@ -182,11 +186,13 @@ public class BookListActivity extends AppCompatActivity {
 
     @SuppressWarnings("deprecation")
     private void handleSendImage(Intent intent) {
-        final Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
 
+        final Uri imageUri = (Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (imageUri != null) {
 
+            String xx = getFileNameFromURI(this, imageUri);
             checkStorageAccess(false);
+            String yy = imageUri.getPath();
             String filename = imageUri.getPath().replace("/device_storage", "/storage/emulated" );
             int id =  db.getBookId(filename);
             if (id == -1) {
@@ -199,6 +205,29 @@ public class BookListActivity extends AppCompatActivity {
 
 
         }
+    }
+
+
+    public String getFileNameFromURI(Context context, Uri uri) {
+        String filePath = null;
+        Uri _uri = uri;
+        String filename = null;
+        if (_uri != null && "content".equals(_uri.getScheme())) {
+            Cursor cursor = context.getContentResolver().query(_uri, null, null, null,
+                    null,null);
+            try {
+                if(cursor!=null && cursor.moveToFirst()) {
+                    filename = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                }
+            } finally {
+                cursor.close();
+            }
+        } else {
+            filePath = _uri.getPath();
+            filename =new File(_uri.getPath()).getName();
+        }
+
+        return filename;
     }
 
     @Override
