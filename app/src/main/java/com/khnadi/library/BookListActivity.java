@@ -1,4 +1,4 @@
-package com.quaap.bookymcbookface;
+package com.khnadi.library;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -52,21 +52,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.quaap.bookymcbookface.book.Book;
-import com.quaap.bookymcbookface.book.BookMetadata;
+import com.khnadi.library.book.Book;
+import com.khnadi.library.book.BookMetadata;
 
-/**
- * Copyright (C) 2017   Tom Kliethermes
- *
- * This file is part of BookyMcBookface and is is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your option) any
- * later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- */
+
 
 public class BookListActivity extends AppCompatActivity {
 
@@ -481,8 +470,6 @@ public class BookListActivity extends AppCompatActivity {
         super.onPrepareOptionsMenu(menu);
 
         menu.findItem(R.id.menu_add).setVisible(!showingSearch);
-        menu.findItem(R.id.menu_add_dir).setVisible(!showingSearch);
-        menu.findItem(R.id.menu_get_books).setVisible(!showingSearch);
         menu.findItem(R.id.menu_sort).setVisible(!showingSearch);
 
         MenuItem screenPaging = menu.findItem(R.id.menu_enable_screen_paging);
@@ -525,12 +512,6 @@ public class BookListActivity extends AppCompatActivity {
             //case R.id.menu_add2:
                 findFile();
                 break;
-            case R.id.menu_add_dir:
-                findDir();
-                break;
-            case R.id.menu_about:
-                showMsg(BookListActivity.this,getString(R.string.about), getString(R.string.about_app));
-                break;
             case R.id.menu_sort_default:
                 item.setChecked(true);
                 setSortOrder(SortOrder.Default);
@@ -550,10 +531,6 @@ public class BookListActivity extends AppCompatActivity {
                 item.setChecked(true);
                 setSortOrder(SortOrder.Added);
                 pop = true;
-                break;
-            case R.id.menu_get_books:
-                Intent intent = new Intent(this, GetBooksActivity.class);
-                startActivity(intent);
                 break;
             case R.id.menu_completed_books:
                 pop = true;

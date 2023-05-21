@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.quaap.bookymcbookface"
+    package="com.khnadi.library"
     android:versionCode="430"
     android:versionName="0.4.3">
 
@@ -50,26 +50,17 @@
             android:name=".ReaderActivity"
             android:screenOrientation="portrait"
             android:parentActivityName=".BookListActivity" />
-        <activity
-            android:name=".GetBooksActivity"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".BookListActivity" />
 
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.quaap.bookymcbookface.fileprovider"
+            android:authorities="com.khnadi.library.fileprovider"
         android:grantUriPermissions="true"
             android:exported="false"
         android:permission="android.permission.MANAGE_DOCUMENTS">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/filepaths"/>
-            <!--
-        <intent-filter>
-            <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
-        </intent-filter>
-        -->
         </provider>
 
 

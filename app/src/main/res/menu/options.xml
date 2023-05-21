@@ -9,17 +9,9 @@
         app:showAsAction="always" />
 
     <item
-        android:id="@+id/menu_add_dir"
-        android:title="@string/add_dir" />
-
-    <item
         android:id="@+id/menu_search_books"
         android:icon="@android:drawable/ic_search_category_default"
         android:title="@string/search_your_books" />
-
-    <item
-        android:id="@+id/menu_get_books"
-        android:title="@string/find_books_online" />
 
     <!-- android:icon="@drawable/select_list" -->
     <item
@@ -115,9 +107,5 @@
         </menu>
 
     </item>
-
-    <item
-        android:id="@+id/menu_about"
-        android:title="@string/about" />
 
 </menu>

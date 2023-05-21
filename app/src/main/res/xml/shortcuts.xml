@@ -9,9 +9,9 @@
         android:shortcutDisabledMessage="@string/book_status_started"
         tools:ignore="UnusedAttribute">
         <intent
-            android:action="com.quaap.bookymcbookface.SHOW_OPEN_BOOKS"
-            android:targetPackage="com.quaap.bookymcbookface"
-            android:targetClass="com.quaap.bookymcbookface.BookListActivity">
+            android:action="com.khnadi.library.SHOW_OPEN_BOOKS"
+            android:targetPackage="com.khnadi.library"
+            android:targetClass="com.khnadi.library.BookListActivity">
 
         </intent>
         <categories android:name="android.shortcut.conversation" />
@@ -25,9 +25,9 @@
         android:shortcutDisabledMessage="@string/book_status_none"
         tools:ignore="UnusedAttribute">
         <intent
-            android:action="com.quaap.bookymcbookface.SHOW_UNREAD_BOOKS"
-            android:targetPackage="com.quaap.bookymcbookface"
-            android:targetClass="com.quaap.bookymcbookface.BookListActivity">
+            android:action="com.khnadi.library.SHOW_UNREAD_BOOKS"
+            android:targetPackage="com.khnadi.library"
+            android:targetClass="com.khnadi.library.BookListActivity">
 
         </intent>
         <categories android:name="android.shortcut.conversation" />
