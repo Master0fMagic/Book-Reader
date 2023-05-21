@@ -16,6 +16,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -24,6 +25,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.SpannableString;
@@ -47,6 +49,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,7 +59,6 @@ import java.util.List;
 
 import com.khnadi.library.book.Book;
 import com.khnadi.library.book.BookMetadata;
-
 
 
 public class BookListActivity extends AppCompatActivity {
@@ -91,7 +95,7 @@ public class BookListActivity extends AppCompatActivity {
     public final static String prefname = "booklist";
 
     private boolean openLastread = false;
-    private static boolean alreadyStarted=false;
+    private static boolean alreadyStarted = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,7 +125,7 @@ public class BookListActivity extends AppCompatActivity {
         bookAdapter.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                readBook((int)view.getTag());
+                readBook((int) view.getTag());
             }
         });
         bookAdapter.setOnLongClickListener(new View.OnLongClickListener() {
@@ -137,7 +141,6 @@ public class BookListActivity extends AppCompatActivity {
         receiverSendAction();
 
         processIntent(getIntent());
-
 
 
         //Log.d("BOOKLIST", "onCreate end");
@@ -182,12 +185,12 @@ public class BookListActivity extends AppCompatActivity {
             String xx = getFileNameFromURI(this, imageUri);
             checkStorageAccess(false);
             String yy = imageUri.getPath();
-            String filename = imageUri.getPath().replace("/device_storage", "/storage/emulated" );
-            int id =  db.getBookId(filename);
+            String filename = imageUri.getPath().replace("/device_storage", "/storage/emulated");
+            int id = db.getBookId(filename);
             if (id == -1) {
                 addBook(filename);
             }
-            id =  db.getBookId(filename);
+            id = db.getBookId(filename);
             if (id > -1) {
                 readBook(id);
             }
@@ -203,9 +206,9 @@ public class BookListActivity extends AppCompatActivity {
         String filename = null;
         if (_uri != null && "content".equals(_uri.getScheme())) {
             Cursor cursor = context.getContentResolver().query(_uri, null, null, null,
-                    null,null);
+                    null, null);
             try {
-                if(cursor!=null && cursor.moveToFirst()) {
+                if (cursor != null && cursor.moveToFirst()) {
                     filename = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
                 }
             } finally {
@@ -213,7 +216,7 @@ public class BookListActivity extends AppCompatActivity {
             }
         } else {
             filePath = _uri.getPath();
-            filename =new File(_uri.getPath()).getName();
+            filename = new File(_uri.getPath()).getName();
         }
 
         return filename;
@@ -230,18 +233,49 @@ public class BookListActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode,
                                  Intent returnIntent) {
         // If the selection didn't work
+        super.onActivityResult(requestCode, resultCode, returnIntent);
         if (resultCode != RESULT_OK) {
             // Exit without doing anything else
             return;
-        } else {
-            // Get the file's content URI from the incoming Intent
-            Uri returnUri = returnIntent.getData();
-            /*
-             * Try to open the file for "read" access using the
-             * returned URI. If the file isn't found, write to the
-             * error log and return.
-             */
         }
+
+        if (requestCode == 1 && returnIntent != null && returnIntent.getData() != null) {
+            initNewBook(returnIntent.getData());
+        }
+    }
+
+    private void copyInputStreamToFile(InputStream inputStream, File file)
+            throws IOException {
+
+        // append = false
+        try (FileOutputStream outputStream = new FileOutputStream(file, false)) {
+            int read;
+            byte[] bytes = new byte[8192];
+            while ((read = inputStream.read(bytes)) != -1) {
+                outputStream.write(bytes, 0, read);
+            }
+        }
+
+    }
+
+    private void initNewBook(Uri uri) {
+        String filename = System.currentTimeMillis() + "_" + getFileNameFromURI(this, uri);
+        File newFile = new File(getFilesDir(), filename);
+
+        try (ParcelFileDescriptor pfd = getContentResolver().openFileDescriptor(uri, "r")) {
+            if (!newFile.createNewFile()) {
+                //file with such name already_exist
+                return;
+            }
+
+            InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(pfd);
+            copyInputStreamToFile(inputStream, newFile);
+        } catch (IOException exception) {
+            throw new RuntimeException(exception);
+        }
+
+        addBook(newFile.getAbsolutePath());
+        populateBooks();
     }
 
 
@@ -275,14 +309,16 @@ public class BookListActivity extends AppCompatActivity {
             }
         }
 
-        if (!hadSpecialOpen){
+        if (!hadSpecialOpen) {
 
             switch (data.getInt(STARTWITH_KEY, STARTLASTREAD)) {
                 case STARTLASTREAD:
-                    if (recentread!=-1 && data.getBoolean(ReaderActivity.READEREXITEDNORMALLY, true)) openLastread = true;
+                    if (recentread != -1 && data.getBoolean(ReaderActivity.READEREXITEDNORMALLY, true))
+                        openLastread = true;
                     break;
                 case STARTOPEN:
-                    showStatus = BookDb.STATUS_STARTED; break;
+                    showStatus = BookDb.STATUS_STARTED;
+                    break;
                 case STARTALL:
                     showStatus = BookDb.STATUS_ANY;
             }
@@ -317,7 +353,7 @@ public class BookListActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (showingSearch || showStatus!=BookDb.STATUS_ANY) {
+        if (showingSearch || showStatus != BookDb.STATUS_ANY) {
             setTitle(R.string.app_name);
             populateBooks();
             showingSearch = false;
@@ -327,7 +363,7 @@ public class BookListActivity extends AppCompatActivity {
     }
 
     private void setSortOrder(SortOrder sortOrder) {
-        data.edit().putString(SORTORDER_KEY,sortOrder.name()).apply();
+        data.edit().putString(SORTORDER_KEY, sortOrder.name()).apply();
     }
 
     @NonNull
@@ -354,7 +390,7 @@ public class BookListActivity extends AppCompatActivity {
         int title = R.string.app_name;
         switch (status) {
             case BookDb.STATUS_SEARCH:
-                String lastSearch = data.getString("__LAST_SEARCH_STR__","");
+                String lastSearch = data.getString("__LAST_SEARCH_STR__", "");
                 if (!lastSearch.trim().isEmpty()) {
                     boolean stitle = data.getBoolean("__LAST_TITLE__", true);
                     boolean sauthor = data.getBoolean("__LAST_AUTHOR__", true);
@@ -388,7 +424,7 @@ public class BookListActivity extends AppCompatActivity {
 
         SortOrder sortorder = getSortOrder();
         final List<Integer> books = db.getBookIds(sortorder, status);
-        populateBooks(books,  showRecent);
+        populateBooks(books, showRecent);
 
         invalidateOptionsMenu();
     }
@@ -411,7 +447,7 @@ public class BookListActivity extends AppCompatActivity {
             if (recentread >= 0) {
                 //viewAdder.displayBook(recentread);
                 books.remove((Integer) recentread);
-                books.add(0, (Integer)recentread);
+                books.add(0, (Integer) recentread);
             }
         }
 
@@ -501,7 +537,6 @@ public class BookListActivity extends AppCompatActivity {
     }
 
 
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
@@ -509,7 +544,7 @@ public class BookListActivity extends AppCompatActivity {
         boolean pop = false;
         switch (item.getItemId()) {
             case R.id.menu_add:
-            //case R.id.menu_add2:
+                //case R.id.menu_add2:
                 findFile();
                 break;
             case R.id.menu_sort_default:
@@ -556,19 +591,23 @@ public class BookListActivity extends AppCompatActivity {
                 status = BookDb.STATUS_ANY;
                 break;
             case R.id.menu_start_all_books:
-                data.edit().putInt(STARTWITH_KEY, STARTALL).apply(); break;
+                data.edit().putInt(STARTWITH_KEY, STARTALL).apply();
+                break;
             case R.id.menu_start_open_books:
-                data.edit().putInt(STARTWITH_KEY, STARTOPEN).apply(); break;
+                data.edit().putInt(STARTWITH_KEY, STARTOPEN).apply();
+                break;
             case R.id.menu_start_last_read:
-                data.edit().putInt(STARTWITH_KEY, STARTLASTREAD).apply(); break;
+                data.edit().putInt(STARTWITH_KEY, STARTLASTREAD).apply();
+                break;
             case R.id.menu_enable_screen_paging:
                 item.setChecked(!item.isChecked());
                 data.edit().putBoolean(ENABLE_SCREEN_PAGE_KEY, item.isChecked()).apply();
-                if (enableScrollMenu!=null) enableScrollMenu.setEnabled(item.isChecked());
+                if (enableScrollMenu != null) enableScrollMenu.setEnabled(item.isChecked());
                 break;
             case R.id.menu_enable_scroll:
                 item.setChecked(!item.isChecked());
-                data.edit().putBoolean(ENABLE_DRAG_SCROLL_KEY, item.isChecked()).apply(); break;
+                data.edit().putBoolean(ENABLE_DRAG_SCROLL_KEY, item.isChecked()).apply();
+                break;
             default:
 
                 return super.onOptionsItemSelected(item);
@@ -580,7 +619,7 @@ public class BookListActivity extends AppCompatActivity {
             viewAdder.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                   populateBooks(statusf);
+                    populateBooks(statusf);
                     invalidateOptionsMenu();
                 }
             }, 120);
@@ -592,10 +631,10 @@ public class BookListActivity extends AppCompatActivity {
 
 
     public static String maxlen(String text, int maxlen) {
-        if (text!=null && text.length() > maxlen) {
-            int minus = text.length()>3?3:0;
+        if (text != null && text.length() > maxlen) {
+            int minus = text.length() > 3 ? 3 : 0;
 
-            return text.substring(0, maxlen-minus) + "...";
+            return text.substring(0, maxlen - minus) + "...";
         }
         return text;
     }
@@ -604,7 +643,7 @@ public class BookListActivity extends AppCompatActivity {
 
         final BookDb.BookRecord book = db.getBookRecord(bookid);
 
-        if (book!=null && book.filename!=null) {
+        if (book != null && book.filename != null) {
             //data.edit().putString(LASTREAD_KEY, BOOK_PREFIX + book.id).apply();
 
             final long now = System.currentTimeMillis();
@@ -615,7 +654,7 @@ public class BookListActivity extends AppCompatActivity {
                 @Override
                 public void run() {
 
-                    getReader(book,true);
+                    getReader(book, true);
 
                 }
             }, 300);
@@ -625,22 +664,21 @@ public class BookListActivity extends AppCompatActivity {
                 try {
 
                     ShortcutManager shortcutManager = (ShortcutManager) getSystemService(Context.SHORTCUT_SERVICE);
-                    if (shortcutManager!=null) {
-                        Intent readBook = getReader(book,false);
+                    if (shortcutManager != null) {
+                        Intent readBook = getReader(book, false);
 
 
                         ShortcutInfo readShortcut = new ShortcutInfo.Builder(this, "id1")
                                 .setShortLabel(getString(R.string.shortcut_latest))
                                 .setLongLabel(getString(R.string.shortcut_latest_title, maxlen(book.title, 24)))
-                                .setIcon(Icon.createWithResource(BookListActivity.this, R.mipmap.ic_launcher_round))
+                                .setIcon(Icon.createWithResource(BookListActivity.this, R.mipmap.ic_launcher))
                                 .setIntent(readBook)
                                 .build();
 
 
-
                         shortcutManager.setDynamicShortcuts(Collections.singletonList(readShortcut));
                     }
-                } catch(Exception e) {
+                } catch (Exception e) {
                     Log.e("Booky", e.getMessage(), e);
                 }
             }
@@ -665,16 +703,16 @@ public class BookListActivity extends AppCompatActivity {
 
     private void removeBook(int bookid, boolean delete) {
         BookDb.BookRecord book = db.getBookRecord(bookid);
-        if (book==null) {
-            Toast.makeText(this, "Bug? The book doesn't seem to be in the database",Toast.LENGTH_LONG).show();
+        if (book == null) {
+            Toast.makeText(this, "Bug? The book doesn't seem to be in the database", Toast.LENGTH_LONG).show();
             return;
         }
-        if (book.filename!=null && book.filename.length()>0) {
+        if (book.filename != null && book.filename.length() > 0) {
             Book.remove(this, new File(book.filename));
         }
         if (delete) {
             db.removeBook(bookid);
-            if (bookAdapter!=null) bookAdapter.notifyItemIdRemoved(bookid);
+            if (bookAdapter != null) bookAdapter.notifyItemIdRemoved(bookid);
         }
 //        else if (status!=BookDb.STATUS_ANY) {
 //            //db.updateLastRead(bookid, -1);
@@ -684,6 +722,7 @@ public class BookListActivity extends AppCompatActivity {
     }
 
     private boolean addBook(String filename) {
+
         return addBook(filename, true, System.currentTimeMillis());
     }
 
@@ -700,34 +739,37 @@ public class BookListActivity extends AppCompatActivity {
 
             BookMetadata metadata = Book.getBookMetaData(this, filename);
 
-            if (metadata!=null) {
+            if (metadata != null) {
 
                 return db.addBook(filename, metadata.getTitle(), metadata.getAuthor(), dateadded) > -1;
 
             } else if (showToastWarnings) {
-                Toast.makeText(this,getString(R.string.coulndt_add_book, new File(filename).getName()),Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.coulndt_add_book, new File(filename).getName()), Toast.LENGTH_SHORT).show();
             }
 
         } catch (Exception e) {
-            Log.e("BookList", "File: " + filename  + ", " + e.getMessage(), e);
+            Log.e("BookList", "File: " + filename + ", " + e.getMessage(), e);
         }
         return false;
     }
 
     private void findFile() {
 
-        FsTools fsTools = new FsTools(this);
-
-        if (checkStorageAccess(false)) {
-            fsTools.selectExternalLocation(new FsTools.SelectionMadeListener() {
-                @Override
-                public void selected(File selection) {
-                    addBook(selection.getPath());
-                    populateBooks();
-
-                }
-            }, getString(R.string.find_book), false, Book.getFileExtensionRX());
-        }
+//        FsTools fsTools = new FsTools(this);
+//
+//        if (checkStorageAccess(false)) {
+//            fsTools.selectExternalLocation(new FsTools.SelectionMadeListener() {
+//                @Override
+//                public void selected(File selection) {
+//                    addBook(selection.getPath());
+//                    populateBooks(); populateBooks();
+//
+//                }
+//            }, getString(R.string.find_book), false, Book.getFileExtensionRX());
+//        }
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("application/epub+zip");
+        startActivityForResult(intent, 1);
     }
 
     private void showProgress(int added) {
@@ -741,7 +783,7 @@ public class BookListActivity extends AppCompatActivity {
                 }
             });
         }
-        if (added>0) {
+        if (added > 0) {
             tv.setText(getString(R.string.added_numbooks, added));
         } else {
             tv.setText(R.string.loading);
@@ -753,20 +795,20 @@ public class BookListActivity extends AppCompatActivity {
     }
 
 
-    private void addDir( File dir) {
+    private void addDir(File dir) {
 
         viewAdder.showProgress(0);
         new AddDirTask(this, dir).execute(dir);
     }
 
-    private static class AddDirTask extends  AsyncTask<File,Void,Void> {
+    private static class AddDirTask extends AsyncTask<File, Void, Void> {
 
-        int added=0;
+        int added = 0;
         private final WeakReference<BookListActivity> blactref;
         private final File dir;
 
 
-        AddDirTask(BookListActivity blact,  File dir) {
+        AddDirTask(BookListActivity blact, File dir) {
             blactref = new WeakReference<>(blact);
             this.dir = dir;
         }
@@ -774,7 +816,7 @@ public class BookListActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(File... dirs) {
             BookListActivity blact = blactref.get();
-            if (blact!=null && dirs!=null) {
+            if (blact != null && dirs != null) {
                 long time = System.currentTimeMillis();
                 for (File d : dirs) {
                     try {
@@ -807,7 +849,7 @@ public class BookListActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             BookListActivity blact = blactref.get();
-            if (blact!=null) {
+            if (blact != null) {
                 blact.viewAdder.hideProgress();
                 Toast.makeText(blact, blact.getString(R.string.books_added, added), Toast.LENGTH_LONG).show();
                 blact.populateBooks();
@@ -817,7 +859,7 @@ public class BookListActivity extends AppCompatActivity {
         @Override
         protected void onCancelled(Void aVoid) {
             BookListActivity blact = blactref.get();
-            if (blact!=null) {
+            if (blact != null) {
                 blact.viewAdder.hideProgress();
             }
             super.onCancelled(aVoid);
@@ -840,7 +882,7 @@ public class BookListActivity extends AppCompatActivity {
 
 
     private void longClickBook(final View view) {
-        final int bookid = (int)view.getTag();
+        final int bookid = (int) view.getTag();
         PopupMenu menu = new PopupMenu(this, view);
         menu.getMenu().add(R.string.open_book).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
@@ -853,7 +895,7 @@ public class BookListActivity extends AppCompatActivity {
         final int status = db.getStatus(bookid);
         final long lastread = db.getLastReadTime(bookid);
 
-        if (status!=BookDb.STATUS_DONE) {
+        if (status != BookDb.STATUS_DONE) {
             menu.getMenu().add(R.string.mark_completed).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem menuItem) {
@@ -869,7 +911,7 @@ public class BookListActivity extends AppCompatActivity {
             });
         }
 
-        if (status!=BookDb.STATUS_LATER && status!=BookDb.STATUS_DONE) {
+        if (status != BookDb.STATUS_LATER && status != BookDb.STATUS_DONE) {
             menu.getMenu().add(R.string.mark_later).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem menuItem) {
@@ -879,19 +921,19 @@ public class BookListActivity extends AppCompatActivity {
             });
         }
 
-        if (status==BookDb.STATUS_LATER || status==BookDb.STATUS_DONE) {
+        if (status == BookDb.STATUS_LATER || status == BookDb.STATUS_DONE) {
             menu.getMenu().add(R.string.un_mark).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem menuItem) {
 
-                    updateBookStatus(bookid, view, lastread>0 ? BookDb.STATUS_STARTED : BookDb.STATUS_NONE);
+                    updateBookStatus(bookid, view, lastread > 0 ? BookDb.STATUS_STARTED : BookDb.STATUS_NONE);
                     return false;
                 }
             });
         }
 
 
-        if (status==BookDb.STATUS_STARTED) {
+        if (status == BookDb.STATUS_STARTED) {
 
             menu.getMenu().add(R.string.close_book).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
@@ -918,17 +960,17 @@ public class BookListActivity extends AppCompatActivity {
 
     private void updateBookStatus(int bookid, View view, int status) {
         db.updateStatus(bookid, status);
-        if (bookAdapter!=null) bookAdapter.notifyItemIdChanged(bookid);
+        if (bookAdapter != null) bookAdapter.notifyItemIdChanged(bookid);
 //        listHolder.removeView(view);
 //        listHolder.addView(view);
- //       updateViewTimes();
+        //       updateViewTimes();
     }
 
     private boolean checkStorageAccess(boolean yay) {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    yay? REQUEST_READ_EXTERNAL_STORAGE : REQUEST_READ_EXTERNAL_STORAGE_NOYAY);
+                    yay ? REQUEST_READ_EXTERNAL_STORAGE : REQUEST_READ_EXTERNAL_STORAGE_NOYAY);
             return false;
         }
         return true;
@@ -961,7 +1003,7 @@ public class BookListActivity extends AppCompatActivity {
         builder.setTitle(title);
 
         final TextView messageview = new TextView(context);
-        messageview.setPadding(32,8,32,8);
+        messageview.setPadding(32, 8, 32, 8);
 
         final SpannableString s = new SpannableString(message);
         Linkify.addLinks(s, Linkify.ALL);
@@ -991,7 +1033,7 @@ public class BookListActivity extends AppCompatActivity {
         View dialogView = inflater.inflate(R.layout.search, null);
         builder.setView(dialogView);
 
-        final EditText editText =  dialogView.findViewById(R.id.search_text);
+        final EditText editText = dialogView.findViewById(R.id.search_text);
         final RadioButton author = dialogView.findViewById(R.id.search_author);
         final RadioButton title = dialogView.findViewById(R.id.search_title);
         final RadioButton authortitle = dialogView.findViewById(R.id.search_authortitle);
@@ -1026,7 +1068,7 @@ public class BookListActivity extends AppCompatActivity {
         title.setChecked(data.getBoolean("__LAST_TITLE__", false));
         author.setChecked(data.getBoolean("__LAST_AUTHOR__", false));
 
-        String lastSearch = data.getString("__LAST_SEARCH_STR__","");
+        String lastSearch = data.getString("__LAST_SEARCH_STR__", "");
         editText.setText(lastSearch);
         editText.setSelection(lastSearch.length());
         editText.setSelection(0, lastSearch.length());
@@ -1080,7 +1122,7 @@ public class BookListActivity extends AppCompatActivity {
         editText.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (imm!=null) imm.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT);
+                if (imm != null) imm.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT);
             }
         }, 100);
 
@@ -1098,13 +1140,14 @@ public class BookListActivity extends AppCompatActivity {
 
 
         void showProgress(int progress) {
-            Message msg=new Message();
+            Message msg = new Message();
             msg.arg1 = BookListAdderHandler.SHOW_PROGRESS;
             msg.arg2 = progress;
             sendMessage(msg);
         }
+
         void hideProgress() {
-            Message msg=new Message();
+            Message msg = new Message();
             msg.arg1 = BookListAdderHandler.HIDE_PROGRESS;
             sendMessage(msg);
         }
