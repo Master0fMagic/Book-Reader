@@ -3,6 +3,11 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/BookyMcBookface.iml" filepath="$PROJECT_DIR$/BookyMcBookface.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/BookyMcBookfaceTest.iml" filepath="$PROJECT_DIR$/.idea/modules/BookyMcBookfaceTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/BookyMcBookfaceTest.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/BookyMcBookfaceTest.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/BookyMcBookfaceTest.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/BookyMcBookfaceTest.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/BookyMcBookfaceTest.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/BookyMcBookfaceTest.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/BookyMcBookfaceTest.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/BookyMcBookfaceTest.app.unitTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

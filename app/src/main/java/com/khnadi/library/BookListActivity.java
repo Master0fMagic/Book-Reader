@@ -632,7 +632,7 @@ public class BookListActivity extends AppCompatActivity {
                         ShortcutInfo readShortcut = new ShortcutInfo.Builder(this, "id1")
                                 .setShortLabel(getString(R.string.shortcut_latest))
                                 .setLongLabel(getString(R.string.shortcut_latest_title, maxlen(book.title, 24)))
-                                .setIcon(Icon.createWithResource(BookListActivity.this, R.mipmap.ic_launcher_round))
+                                .setIcon(Icon.createWithResource(BookListActivity.this, R.mipmap.ic_launcher))
                                 .setIntent(readBook)
                                 .build();
 
