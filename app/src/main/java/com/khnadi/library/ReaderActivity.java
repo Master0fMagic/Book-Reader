@@ -19,7 +19,9 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+
 import androidx.annotation.RequiresApi;
+
 import android.util.Log;
 import android.view.Display;
 import android.view.MenuItem;
@@ -48,7 +50,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.khnadi.library.book.Book;
 
 
-
 public class ReaderActivity extends Activity {
 
     private static final String TAG = "ReaderActivity";
@@ -61,8 +62,7 @@ public class ReaderActivity extends Activity {
 
     public static final String FILENAME = "filename";
     public static final String SCREEN_PAGING = "screenpaging";
-    public static final String DRAG_SCROLL= "dragscroll";
-
+    public static final String DRAG_SCROLL = "dragscroll";
 
 
     private final Object timerSync = new Object();
@@ -95,12 +95,12 @@ public class ReaderActivity extends Activity {
         final Intent intent = getIntent();
 
         ActionBar ab = getActionBar();
-        if (ab!=null) ab.hide();
+        if (ab != null) ab.hide();
         Display display = getWindowManager().getDefaultDisplay();
         mScreenDim = new Point();
         display.getSize(mScreenDim);
 
-        SensorManager sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+        SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         if (lightSensor != null) {
             hasLightSensor = true;
@@ -115,91 +115,92 @@ public class ReaderActivity extends Activity {
 
         webView.setNetworkAvailable(false);
 
-        final boolean drag_scroll = intent.getBooleanExtra(DRAG_SCROLL,true);
+        final boolean drag_scroll = intent.getBooleanExtra(DRAG_SCROLL, true);
 
-        if (intent.getBooleanExtra(SCREEN_PAGING,true)) webView.setOnTouchListener(new View.OnTouchListener() {
-            float x,y;
-            long time;
-            final long TIMEALLOWED = 300;
-            final int MINSWIPE = 150;
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                float diffx = 0;
-                float diffy = 0;
+        if (intent.getBooleanExtra(SCREEN_PAGING, true))
+            webView.setOnTouchListener(new View.OnTouchListener() {
+                float x, y;
+                long time;
+                final long TIMEALLOWED = 300;
+                final int MINSWIPE = 150;
 
-                switch (motionEvent.getAction()) {
+                @Override
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    float diffx = 0;
+                    float diffy = 0;
 
-                    case MotionEvent.ACTION_UP:
+                    switch (motionEvent.getAction()) {
 
-                        if (drag_scroll) cancelScrollTask();
-                        //Log.d("TIME", "t " + (System.currentTimeMillis() - time));
-                        if (System.currentTimeMillis() - time >TIMEALLOWED) return false;
+                        case MotionEvent.ACTION_UP:
 
-                        diffx = motionEvent.getX() - x;
-                        diffy = motionEvent.getY() - y;
-                        float absdiffx = Math.abs(diffx);
-                        float absdiffy = Math.abs(diffy);
+                            if (drag_scroll) cancelScrollTask();
+                            //Log.d("TIME", "t " + (System.currentTimeMillis() - time));
+                            if (System.currentTimeMillis() - time > TIMEALLOWED) return false;
 
-
-                        if ((absdiffx>absdiffy && diffx>MINSWIPE) || (absdiffy>absdiffx && diffy>MINSWIPE)) {
-                            prevPage();
-                        } else if ((absdiffx>absdiffy && diffx<-MINSWIPE) || (absdiffy>absdiffx && diffy<-MINSWIPE)) {
-                            nextPage();
-                        } else {
-                            return false;
-                        }
-
-
-                    case MotionEvent.ACTION_DOWN:
-                        if (drag_scroll) cancelScrollTask();
-                        x = motionEvent.getX();
-                        y = motionEvent.getY();
-                        time = System.currentTimeMillis();
-                        setAwake();
-                        if (y>mScreenDim.y/3 && x>mScreenDim.x/3 &&
-                                y<mScreenDim.y*2/3 && x<mScreenDim.x*2/3) {
-                            mkFull();
-                            hideMenu();
-
-                            if (currentDimColor!=Color.TRANSPARENT) {
-                                setDimLevel(showMore, Color.LTGRAY);
-                                handler.postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        setDimLevel(showMore, currentDimColor);
-                                    }
-                                }, 2000);
-                            }
-                        }
-                        return false;
-
-                    case MotionEvent.ACTION_MOVE:
-
-                        if (drag_scroll) {
+                            diffx = motionEvent.getX() - x;
                             diffy = motionEvent.getY() - y;
+                            float absdiffx = Math.abs(diffx);
+                            float absdiffy = Math.abs(diffy);
 
-                            if (Math.abs(diffy) > 30) {
-                                if (System.currentTimeMillis() - time > TIMEALLOWED * 1.5) {
-                                    scrollDir = (int) ((-diffy / webView.getHeight()) * webView.getSettings().getDefaultFontSize() * 5);
-                                    startScrollTask();
-                                    webView.clearMatches();
-                                }
+
+                            if ((absdiffx > absdiffy && diffx > MINSWIPE) || (absdiffy > absdiffx && diffy > MINSWIPE)) {
+                                prevPage();
+                            } else if ((absdiffx > absdiffy && diffx < -MINSWIPE) || (absdiffy > absdiffx && diffy < -MINSWIPE)) {
+                                nextPage();
                             } else {
-                                cancelScrollTask();
+                                return false;
                             }
-                        }
 
-                        return true;
 
+                        case MotionEvent.ACTION_DOWN:
+                            if (drag_scroll) cancelScrollTask();
+                            x = motionEvent.getX();
+                            y = motionEvent.getY();
+                            time = System.currentTimeMillis();
+                            setAwake();
+                            if (y > mScreenDim.y / 3 && x > mScreenDim.x / 3 &&
+                                    y < mScreenDim.y * 2 / 3 && x < mScreenDim.x * 2 / 3) {
+                                mkFull();
+                                hideMenu();
+
+                                if (currentDimColor != Color.TRANSPARENT) {
+                                    setDimLevel(showMore, Color.LTGRAY);
+                                    handler.postDelayed(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            setDimLevel(showMore, currentDimColor);
+                                        }
+                                    }, 2000);
+                                }
+                            }
+                            return false;
+
+                        case MotionEvent.ACTION_MOVE:
+
+                            if (drag_scroll) {
+                                diffy = motionEvent.getY() - y;
+
+                                if (Math.abs(diffy) > 30) {
+                                    if (System.currentTimeMillis() - time > TIMEALLOWED * 1.5) {
+                                        scrollDir = (int) ((-diffy / webView.getHeight()) * webView.getSettings().getDefaultFontSize() * 5);
+                                        startScrollTask();
+                                        webView.clearMatches();
+                                    }
+                                } else {
+                                    cancelScrollTask();
+                                }
+                            }
+
+                            return true;
+
+                    }
+
+
+                    return true;
                 }
 
 
-                return true;
-            }
-
-
-
-        });
+            });
 
         webView.setWebViewClient(new WebViewClient() {
 
@@ -216,7 +217,7 @@ public class ReaderActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
-                if (uri.getScheme()!=null && uri.getScheme().equals("file")) {
+                if (uri.getScheme() != null && uri.getScheme().equals("file")) {
                     handleLink(uri.toString());
                     return true;
                 }
@@ -225,7 +226,7 @@ public class ReaderActivity extends Activity {
 
 
             public void onPageFinished(WebView view, String url) {
-               // addEOCPadding();
+                // addEOCPadding();
                 try {
                     restoreBgColor();
                     restoreScrollOffsetDelayed(100);
@@ -253,14 +254,6 @@ public class ReaderActivity extends Activity {
             }
         });
 
-        findViewById(R.id.contents_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showToc();
-                //hideMenu();
-            }
-        });
-
         findViewById(R.id.zoom_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -279,44 +272,10 @@ public class ReaderActivity extends Activity {
         showMore.setOnClickListener(morelessControls);
         findViewById(R.id.control_view_less).setOnClickListener(morelessControls);
 
-        fullscreenBox = findViewById(R.id.fullscreen_box);
-
-        fullscreenBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                setFullscreen(b);
-                if (b) {
-                    fullscreenBox.postDelayed(
-                        new Runnable() {
-                              @Override
-                              public void run() {
-                                  mkFull();
-                                  hideMenu();
-                              }
-                        }, 500);
-                } else {
-                    fullscreenBox.postDelayed(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                mkReg();
-                                hideMenu();
-                            }
-                        }, 500);
-                }
-            }
-        });
-
-        findViewById(R.id.fullscreen_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                fullscreenBox.setChecked(!fullscreenBox.isChecked());
-            }
-        });
 
         //findFile();
         String filename = intent.getStringExtra(FILENAME);
-        if (filename!=null) {
+        if (filename != null) {
             //if the app crashes on this book,
             // this flag will remain to let the booklist activity know not to auto start it again.
             // it gets set to true in onPause.
@@ -347,21 +306,22 @@ public class ReaderActivity extends Activity {
         @Override
         public void onClick(View view) {
             View v = findViewById(R.id.slide_menu);
-            if (v.getVisibility()==View.GONE) {
+            if (v.getVisibility() == View.GONE) {
                 showMenu();
             } else {
                 hideMenu();
             }
         }
     };
+
     private void setFullscreenMode() {
-        if (book!=null && book.hasDataDir()) {
+        if (book != null && book.hasDataDir()) {
             setFullscreen(book.getFlag(FULLSCREEN, true));
         }
     }
 
     private void setFullscreen(boolean full) {
-        if (book!=null && book.hasDataDir()) book.setFlag(FULLSCREEN, full);
+        if (book != null && book.hasDataDir()) book.setFlag(FULLSCREEN, full);
 
         fullscreenBox.setChecked(full);
     }
@@ -399,17 +359,17 @@ public class ReaderActivity extends Activity {
                     }
                 };
                 try {
-                    if (timer!=null) timer.schedule(scrollTask, 0, 100);
-                } catch(IllegalStateException e) {
+                    if (timer != null) timer.schedule(scrollTask, 0, 100);
+                } catch (IllegalStateException e) {
                     Log.d(TAG, e.getMessage(), e);
-                    Toast.makeText(this,"Something went wrong. Please report a 'scroll' bug.",Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Something went wrong. Please report a 'scroll' bug.", Toast.LENGTH_LONG).show();
                 }
             }
         }
     }
 
     private void cancelScrollTask() {
-        if (scrollTask!=null) {
+        if (scrollTask != null) {
             scrollTask.cancel();
             scrollTask = null;
         }
@@ -420,7 +380,7 @@ public class ReaderActivity extends Activity {
 
     private void prevPage() {
         isPagingDown = false;
-        if(webView.canScrollVertically(-1)) {
+        if (webView.canScrollVertically(-1)) {
             webView.pageUp(false);
             //webView.scrollBy(0,-webView.getHeight()-14);
         } else {
@@ -434,12 +394,12 @@ public class ReaderActivity extends Activity {
 
     private void nextPage() {
         isPagingUp = false;
-        if(webView.canScrollVertically(1)) {
+        if (webView.canScrollVertically(1)) {
             webView.pageDown(false);
             //webView.scrollBy(0,webView.getHeight()-14);
         } else {
             isPagingDown = true;
-            if (book!=null) showUri(book.getNextSection());
+            if (book != null) showUri(book.getNextSection());
 
 
         }
@@ -462,7 +422,7 @@ public class ReaderActivity extends Activity {
     }
 
     private void saveScrollOffset(int offset) {
-        if (book==null) return;
+        if (book == null) return;
         book.setSectionOffset(offset);
     }
 
@@ -476,16 +436,16 @@ public class ReaderActivity extends Activity {
     }
 
     private void restoreScrollOffset() {
-        if (book==null) return;
+        if (book == null) return;
         int spos = book.getSectionOffset();
         webView.computeScroll();
-        if (spos>=0) {
+        if (spos >= 0) {
             webView.scrollTo(0, spos);
             Log.d(TAG, "restoreScrollOffset " + spos);
-        } else if (isPagingUp){
+        } else if (isPagingUp) {
             webView.pageDown(true);
             //webView.scrollTo(0,webView.getContentHeight());
-        } else if (isPagingDown){
+        } else if (isPagingDown) {
             webView.pageUp(true);
         }
         isPagingUp = false;
@@ -494,14 +454,14 @@ public class ReaderActivity extends Activity {
 
     private void loadFile(File file) {
 
-        webView.loadData("Loading " + file.getPath(),"text/plain", "utf-8");
+        webView.loadData("Loading " + file.getPath(), "text/plain", "utf-8");
 
         new LoaderTask(this, file).execute();
 
     }
 
 
-    private static class LoaderTask extends  AsyncTask<Void,Integer,Book>  {
+    private static class LoaderTask extends AsyncTask<Void, Integer, Book> {
 
         private final File file;
         private final WeakReference<ReaderActivity> ractref;
@@ -515,7 +475,7 @@ public class ReaderActivity extends Activity {
         protected void onPreExecute() {
             super.onPreExecute();
             ReaderActivity ract = ractref.get();
-            if (ract!=null) {
+            if (ract != null) {
                 ract.progressBar.setProgress(0);
                 ract.progressBar.setVisibility(View.VISIBLE);
 
@@ -526,7 +486,7 @@ public class ReaderActivity extends Activity {
         protected void onProgressUpdate(Integer... values) {
             super.onProgressUpdate(values);
             ReaderActivity ract = ractref.get();
-            if (ract!=null) {
+            if (ract != null) {
                 ract.progressBar.setProgress(values[0]);
             }
         }
@@ -535,7 +495,7 @@ public class ReaderActivity extends Activity {
         protected void onCancelled() {
             super.onCancelled();
             ReaderActivity ract = ractref.get();
-            if (ract!=null) {
+            if (ract != null) {
                 ract.progressBar.setVisibility(View.GONE);
             }
         }
@@ -543,11 +503,11 @@ public class ReaderActivity extends Activity {
         @Override
         protected Book doInBackground(Void... voids) {
             ReaderActivity ract = ractref.get();
-            if (ract==null) return null;
+            if (ract == null) return null;
             try {
                 ract.book = Book.getBookHandler(ract, file.getPath());
                 Log.d(TAG, "File " + file);
-                if (ract.book!=null) {
+                if (ract.book != null) {
                     ract.book.load(file);
                     return ract.book;
                 }
@@ -566,19 +526,19 @@ public class ReaderActivity extends Activity {
         protected void onPostExecute(Book book) {
 
             ReaderActivity ract = ractref.get();
-            if (ract==null) return;
+            if (ract == null) return;
 
             String badtext = ract.getString(R.string.book_bug);
             try {
                 ract.progressBar.setVisibility(View.GONE);
 
-                if (book==null && ract.exception!=null) {
+                if (book == null && ract.exception != null) {
                     ract.webView.setOnTouchListener(null);
                     ract.webView.setWebViewClient(null);
-                    ract.webView.loadData(badtext + ract.exception.getLocalizedMessage(),"text/plain", "utf-8");
+                    ract.webView.loadData(badtext + ract.exception.getLocalizedMessage(), "text/plain", "utf-8");
                     throw ract.exception;
                 }
-                if (book !=null && ract.book != null && ract.book.hasDataDir()) {
+                if (book != null && ract.book != null && ract.book.hasDataDir()) {
                     int fontsize = ract.book.getFontsize();
                     if (fontsize != -1) {
                         ract.setFontSize(fontsize);
@@ -589,12 +549,8 @@ public class ReaderActivity extends Activity {
                     } else {
                         Toast.makeText(ract, badtext + " (no sections)", Toast.LENGTH_LONG).show();
                     }
-                    if (ract.book.getFlag(FULLSCREEN, true)) {
-                        ract.mkFull();
-                    } else {
-                        ract.mkReg();
-                    }
-                    ract.setFullscreenMode();
+
+                    ract.mkReg();
                     ract.setAwake();
                 }
             } catch (Throwable e) {
@@ -607,7 +563,7 @@ public class ReaderActivity extends Activity {
 
 
     private void showUri(Uri uri) {
-        if (uri !=null) {
+        if (uri != null) {
             Log.d(TAG, "trying to load " + uri);
 
             //book.clearSectionOffset();
@@ -616,7 +572,7 @@ public class ReaderActivity extends Activity {
     }
 
     private void handleLink(String clickedLink) {
-        if (clickedLink!=null) {
+        if (clickedLink != null) {
             Log.d(TAG, "clicked on " + clickedLink);
             showUri(book.handleClickedLink(clickedLink));
         }
@@ -630,7 +586,7 @@ public class ReaderActivity extends Activity {
         int minsize = webView.getSettings().getMinimumFontSize();
 
         defsize += 4;
-        if (defsize>40) {
+        if (defsize > 40) {
             defsize = minsize;
         }
 
@@ -650,20 +606,20 @@ public class ReaderActivity extends Activity {
         final float scale = getResources().getDisplayMetrics().density;
 
 
-       // Log.d(TAG, "def " + defsize + " " + scale);
+        // Log.d(TAG, "def " + defsize + " " + scale);
         final PopupMenu sizemenu = new PopupMenu(this, findViewById(R.id.zoom_button));
-        for (int size=minsize; size<=36; size+=2) {
+        for (int size = minsize; size <= 36; size += 2) {
             final int s = size;
 
-            MenuItem mi = sizemenu.getMenu().add(" "+size);
+            MenuItem mi = sizemenu.getMenu().add(" " + size);
             mi.setCheckable(true);
-            mi.setChecked(size==defsize);
+            mi.setChecked(size == defsize);
 
             mi.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
                 @Override
                 public boolean onMenuItemClick(MenuItem menuItem) {
-                    Log.d(TAG, "def " + (defsize-s));
-                    int scrolloffset = (int)(-webView.getScrollY()*(defsize - s)/scale/2.7);
+                    Log.d(TAG, "def " + (defsize - s));
+                    int scrolloffset = (int) (-webView.getScrollY() * (defsize - s) / scale / 2.7);
                     Log.d(TAG, "scrollby " + scrolloffset);
 
                     setFontSize(s);
@@ -683,7 +639,7 @@ public class ReaderActivity extends Activity {
 
     private void mkFull() {
 
-        if (book==null || !book.getFlag(FULLSCREEN, true)) return;
+        if (book == null || !book.getFlag(FULLSCREEN, true)) return;
 //        findViewById(R.id.fullscreen_no_button).setVisibility(View.VISIBLE);
 //        findViewById(R.id.fullscreen_button).setVisibility(View.GONE);
 
@@ -733,7 +689,7 @@ public class ReaderActivity extends Activity {
             }
         }
 
-        if (exception==null) {
+        if (exception == null) {
             try {
                 saveScrollOffset();
             } catch (Throwable t) {
@@ -746,7 +702,7 @@ public class ReaderActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        if (timer!=null) {
+        if (timer != null) {
             timer.cancel();
             timer.purge();
             timer = null;
@@ -760,30 +716,6 @@ public class ReaderActivity extends Activity {
 //        //if (hasFocus) mkFull();
 //    }
 
-    private void showToc() {
-        Map<String,String> tocmap = book.getToc();
-        PopupMenu tocmenu = new PopupMenu(this, findViewById(R.id.contents_button));
-        for (final String point: tocmap.keySet()) {
-            String text = tocmap.get(point);
-            MenuItem m = tocmenu.getMenu().add(text);
-            //Log.d("EPUB", "TOC2: " + text + ". File: " + point);
-            m.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem menuItem) {
-                    handleLink(point);
-                    return true;
-                }
-            });
-        }
-        if (tocmap.size()==0) {
-            tocmenu.getMenu().add(R.string.no_toc_found);
-        }
-
-        tocmenu.show();
-
-    }
-
-
     //keep the screen on for a few minutes, but not forever
     private void setAwake() {
         try {
@@ -793,7 +725,7 @@ public class ReaderActivity extends Activity {
             synchronized (timerSync) {
                 if (nowakeTask != null) {
                     nowakeTask.cancel();
-                    if (timer==null)  {
+                    if (timer == null) {
                         timer = new Timer();
                         Log.d(TAG, "timer was null?");
                     }
@@ -818,7 +750,7 @@ public class ReaderActivity extends Activity {
                 };
 
                 try {
-                    if (timer==null)  return;
+                    if (timer == null) return;
                     timer.schedule(nowakeTask, 3 * 60 * 1000);
                 } catch (IllegalStateException e) {
                     Log.d(TAG, e.getMessage(), e);
@@ -836,7 +768,7 @@ public class ReaderActivity extends Activity {
         try {
             Window w = ReaderActivity.this.getWindow();
             w.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        }catch (Throwable t) {
+        } catch (Throwable t) {
             Log.e(TAG, t.getMessage(), t);
         }
     }
@@ -848,7 +780,7 @@ public class ReaderActivity extends Activity {
 
         unlistenLight();
 
-        SensorManager sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+        SensorManager sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         Sensor lightSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         if (lightSensor != null) {
 
@@ -860,7 +792,7 @@ public class ReaderActivity extends Activity {
                 private final int mincol = 30;
                 private final int maxcol = 240;
                 private final double luxThreshold = 50;
-                private final double multfac = (maxcol-mincol)/luxThreshold;
+                private final double multfac = (maxcol - mincol) / luxThreshold;
 
                 private Runnable changer;
 
@@ -931,21 +863,21 @@ public class ReaderActivity extends Activity {
                 sensorManager.unregisterListener(lightSensorListener);
                 lightSensorListener = null;
             }
-        }  catch (Throwable t) {
+        } catch (Throwable t) {
             Log.e(TAG, t.getMessage(), t);
         }
     }
 
 
     private void showBrightnessControl() {
-        if (book==null) return;
+        if (book == null) return;
 
         PopupMenu bmenu = new PopupMenu(this, findViewById(R.id.brightness_button));
         int bg = book.getBackgroundColor();
 
         MenuItem norm = bmenu.getMenu().add(R.string.book_default);
 
-        if (bg==Integer.MAX_VALUE) {
+        if (bg == Integer.MAX_VALUE) {
             norm.setCheckable(true);
             norm.setChecked(true);
         }
@@ -983,28 +915,28 @@ public class ReaderActivity extends Activity {
         }
 
 
-        for (int i = 0; i<7; i++) {
-            int b = i*33;
-            final int color = Color.argb(255, 255-b, 250-b, 250-i-b);
+        for (int i = 0; i < 7; i++) {
+            int b = i * 33;
+            final int color = Color.argb(255, 255 - b, 250 - b, 250 - i - b);
             String strcolor;
             switch (i) {
                 case 0:
-                    strcolor = (i+1) + " - " + getString(R.string.bright);
+                    strcolor = (i + 1) + " - " + getString(R.string.bright);
                     break;
                 case 3:
-                    strcolor = (i+1) + " - " + getString(R.string.bright_medium);
+                    strcolor = (i + 1) + " - " + getString(R.string.bright_medium);
                     break;
                 case 6:
-                    strcolor = (i+1) + " - " + getString(R.string.dim);
+                    strcolor = (i + 1) + " - " + getString(R.string.dim);
                     break;
                 default:
-                    strcolor = (i+1) + "";
+                    strcolor = (i + 1) + "";
 
             }
 
             MenuItem m = bmenu.getMenu().add(strcolor);
             m.setIcon(new ColorDrawable(color));
-            if (bg==color) {
+            if (bg == color) {
                 m.setCheckable(true);
                 m.setChecked(true);
             }
@@ -1023,7 +955,7 @@ public class ReaderActivity extends Activity {
     }
 
     private void restoreBgColor() {
-        if (book!=null && book.hasDataDir()) {
+        if (book != null && book.hasDataDir()) {
             int bgcolor = book.getBackgroundColor();
             switch (bgcolor) {
                 case Color.TRANSPARENT:
@@ -1047,7 +979,7 @@ public class ReaderActivity extends Activity {
     }
 
     private void resetColor() {
-        applyColor(Color.argb(255,245,245,245), true);
+        applyColor(Color.argb(255, 245, 245, 245), true);
     }
 
     @SuppressLint("SetJavaScriptEnabled")
